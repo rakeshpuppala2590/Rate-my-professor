@@ -33,34 +33,9 @@ export default function Home() {
       const professorInfo = data.professorInfo;
       const feedbacks = data.feedbacks;
 
-      // Format professorInfo as a comma-separated string
-      const professorInfoString = [
-        `Name: ${professorInfo.name || "Unknown"}`,
-        `Department: ${professorInfo.department || "Unknown"}`,
-        `Overall Rating: ${professorInfo.overallRating || "N/A"}`,
-        `Number of Ratings: ${professorInfo.numRatings || "0"}`,
-        `Would Take Again: ${professorInfo.wouldTakeAgain || "N/A"}`,
-        `Difficulty: ${professorInfo.difficulty || "N/A"}`,
-        `Top Tags: ${professorInfo.topTags.join(", ") || "None"}`,
-      ].join(", ");
-
-      // Format feedbacks as a comma-separated string
-      const feedbacksString = feedbacks
-        .map((feedback) =>
-          [
-            `Course: ${feedback.course || ""}`,
-            `Date: ${feedback.date || ""}`,
-            `Quality: ${feedback.qualityRating || ""}`,
-            `Difficulty: ${feedback.difficultyRating || ""}`,
-            `Comments: ${feedback.comments || ""}`,
-            `Tags: ${feedback.tags.join(", ") || "None"}`,
-          ].join(", ")
-        )
-        .join("; ");
-
-      // Print the formatted strings to the console
-      console.log("Professor Information:", professorInfoString);
-      console.log("Feedbacks:", feedbacksString);
+      // Print the data to the console
+      console.log("Professor Information:", professorInfo);
+      console.log("Feedbacks:", feedbacks);
     } catch (err) {
       console.error("Error:", err.message);
       setError(err.message);
