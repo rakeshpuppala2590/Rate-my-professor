@@ -11,8 +11,11 @@ export default function Home() {
   const [isQuerying, setIsQuerying] = useState(false);
 
   const handleSubmit = async () => {
-    if (!professorId.trim()) {
-      setError("Please enter a professor ID or URL.");
+    const extractedId = extractProfessorId(professorId);
+    if (!extractedId) {
+      setError(
+        "Invalid URL format. Please enter a valid RateMyProfessors URL."
+      );
       return;
     }
 
@@ -24,7 +27,7 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ professorId }),
+        body: JSON.stringify({ professorId: extractedId }),
       });
 
       const data = await response.json();
@@ -76,6 +79,11 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const extractProfessorId = (url) => {
+    const match = url.match(/professor\/(\d+)$/);
+    return match ? match[1] : null;
   };
 
   const sendToEmbeddingAPI = async (source, professorInfo, feedbacks) => {
@@ -141,7 +149,7 @@ export default function Home() {
           type="text"
           value={professorId}
           onChange={(e) => setProfessorId(e.target.value)}
-          placeholder="Enter Professor ID"
+          placeholder="Enter Professor URL: "
         />
         <button onClick={handleSubmit} disabled={isLoading}>
           {isLoading ? "Scraping..." : "Scrape Feedback"}
