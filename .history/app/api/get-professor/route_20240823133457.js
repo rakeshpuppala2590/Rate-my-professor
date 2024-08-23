@@ -51,7 +51,7 @@ export async function POST(req) {
 
     const relevantContext = await queryPinecone(userQuery);
 
-    const primer = `You are a personal assistant. Answer any questions I have about the professor only based on the info I have provided.`;
+    const primer = `You are a personal assistant. Answer any questions I have about the professor by using the info I have provided.`;
 
     const augmented_query = `${relevantContext.join(
       "\n"

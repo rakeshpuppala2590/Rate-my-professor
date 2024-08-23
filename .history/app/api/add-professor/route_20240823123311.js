@@ -38,39 +38,31 @@ async function splitText(text) {
   return await splitter.splitText(text);
 }
 
-async function embedAndStore(chunks, source) {
+async function embedAndStore(text, source) {
+  const embedding = await getEmbedding(text);
   const index = pinecone.Index("professors-index");
 
-  for (let i = 0; i < chunks.length; i++) {
-    const chunk = chunks[i];
-    const embedding = await getEmbedding(chunk);
-
-    await index.upsert([
-      {
-        id: `${source}-${Date.now()}-${i}`,
-        values: embedding,
-        metadata: { text: chunk, source, chunkIndex: i },
-      },
-    ]);
-  }
+  await index.upsert([
+    {
+      id: `${source}-${Date.now()}`,
+      values: embedding,
+      metadata: { text, source },
+    },
+  ]);
 }
 
 export async function POST(req) {
   const { text, source } = await req.json();
 
   try {
-    const chunks = await splitText(text);
-    await embedAndStore(chunks, source);
+    await embedAndStore(text, source);
 
-    return new Response(
-      JSON.stringify({ success: true, chunks: chunks.length }),
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
   } catch (error) {
     console.error("Error processing request:", error);
     return new Response(JSON.stringify({ error: error.message }), {
