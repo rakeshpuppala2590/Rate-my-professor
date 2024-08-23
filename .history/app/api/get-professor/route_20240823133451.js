@@ -51,14 +51,14 @@ export async function POST(req) {
 
     const relevantContext = await queryPinecone(userQuery);
 
-    const primer = `You are a personal assistant. Answer any questions I have about the professor only based on the info I have provided.`;
+    const primer = `You are a personal assistant. Answer any questions I have about the professor by using the info I have provided.`;
 
     const augmented_query = `${relevantContext.join(
       "\n"
     )}\n---------\nquestion:\n${userQuery}`;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-3.5-turbo", // You can change this to a different model if needed
       messages: [
         { role: "system", content: primer },
         { role: "user", content: augmented_query },

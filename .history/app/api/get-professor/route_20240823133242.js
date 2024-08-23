@@ -1,14 +1,6 @@
 import { HfInference } from "@huggingface/inference";
-import { OpenAI } from "openai";
-import { NextResponse } from "next/server";
-import { Pinecone } from "@pinecone-database/pinecone";
 
 const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-const pinecone = new Pinecone({
-  apiKey: process.env.PINECONE_API_KEY,
-});
 
 async function getEmbedding(text) {
   const response = await hf.featureExtraction({
@@ -32,7 +24,6 @@ async function getEmbedding(text) {
 
 async function queryPinecone(query) {
   const q_embedding = await getEmbedding(query);
-  const index = pinecone.Index("professors-index");
 
   const queryResponse = await index.query({
     vector: q_embedding,
@@ -51,14 +42,14 @@ export async function POST(req) {
 
     const relevantContext = await queryPinecone(userQuery);
 
-    const primer = `You are a personal assistant. Answer any questions I have about the professor only based on the info I have provided.`;
+    const primer = `You are a personal assistant. Answer any questions I have about the prfoessor by using the info i have provided.`;
 
     const augmented_query = `${relevantContext.join(
       "\n"
     )}\n---------\nquestion:\n${userQuery}`;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "mistralai/mistral-nemo",
       messages: [
         { role: "system", content: primer },
         { role: "user", content: augmented_query },

@@ -4,11 +4,8 @@ import { useState } from "react";
 
 export default function Home() {
   const [professorId, setProfessorId] = useState("");
-  const [userQuery, setUserQuery] = useState("");
-  const [answer, setAnswer] = useState("");
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isQuerying, setIsQuerying] = useState(false);
 
   const handleSubmit = async () => {
     if (!professorId.trim()) {
@@ -102,69 +99,19 @@ export default function Home() {
     }
   };
 
-  const handleQuery = async () => {
-    if (!userQuery.trim()) {
-      setError("Please enter a question.");
-      return;
-    }
-
-    setIsQuerying(true);
-    setError(null);
-    try {
-      const response = await fetch("/api/get-professor", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ userQuery }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setAnswer(data);
-    } catch (err) {
-      console.error("Error:", err.message);
-      setError(err.message);
-    } finally {
-      setIsQuerying(false);
-    }
-  };
-
   return (
     <div>
       <h1>RateMyProfessors Feedback Scraper</h1>
-      <div>
-        <input
-          type="text"
-          value={professorId}
-          onChange={(e) => setProfessorId(e.target.value)}
-          placeholder="Enter Professor ID"
-        />
-        <button onClick={handleSubmit} disabled={isLoading}>
-          {isLoading ? "Scraping..." : "Scrape Feedback"}
-        </button>
-      </div>
-      <div>
-        <input
-          type="text"
-          value={userQuery}
-          onChange={(e) => setUserQuery(e.target.value)}
-          placeholder="Ask a question about the professor"
-        />
-        <button onClick={handleQuery} disabled={isQuerying}>
-          {isQuerying ? "Querying..." : "Ask Question"}
-        </button>
-      </div>
+      <input
+        type="text"
+        value={professorId}
+        onChange={(e) => setProfessorId(e.target.value)}
+        placeholder="Enter Professor ID"
+      />
+      <button onClick={handleSubmit} disabled={isLoading}>
+        {isLoading ? "Scraping..." : "Scrape Feedback"}
+      </button>
       {error && <p style={{ color: "red" }}>Error: {error}</p>}
-      {answer && (
-        <div>
-          <h2>Answer:</h2>
-          <p>{answer}</p>
-        </div>
-      )}
     </div>
   );
 }

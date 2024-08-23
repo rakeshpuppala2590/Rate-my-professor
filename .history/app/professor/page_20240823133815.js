@@ -111,7 +111,7 @@ export default function Home() {
     setIsQuerying(true);
     setError(null);
     try {
-      const response = await fetch("/api/get-professor", {
+      const response = await fetch("/api/query-professor", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
