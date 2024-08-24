@@ -4,15 +4,15 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import ChatbotInterface from "../components/ChatBotInterface";
 import DynamicNavbar from "../components/DynamicNavbar";
-// import Spline from '@splinetool/react-spline';
+import Spline from '@splinetool/react-spline';
 
 // import Background3D from "../components/Background3D";
 
 // Dynamically import Spline to avoid SSR issues
-const Spline = dynamic(() => import('@splinetool/react-spline').then((mod) => mod.Spline), {
-  ssr: false,
-  loading: () => <p>Loading 3D model...</p>,
-});
+// const Spline = dynamic(() => import('@splinetool/react-spline'),{
+//   ssr: false,
+//   loading: () => <p>Loading 3D model...</p>,
+// });
 
 export default function Home() {
   const [professorId, setProfessorId] = useState("");
@@ -21,11 +21,11 @@ export default function Home() {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isQuerying, setIsQuerying] = useState(false);
-  const [isClient, setIsClient] = useState(false);
+  // const [isClient, setIsClient] = useState(false);
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  // useEffect(() => {
+  //   setIsClient(true);
+  // }, []);
 
   const handleSubmit = async () => {
     const extractedId = extractProfessorId(professorId);
@@ -197,10 +197,10 @@ export default function Home() {
       <DynamicNavbar />
       <div className="container mx-auto px-4 py-20 flex flex-col lg:flex-row justify-between items-center">
         {/* Spline model container */}
-        <div className="w-full lg:w-1/2 h-[500px] mb-8 lg:mb-0">
-          {isClient && (
+        <div className="w-full lg:w-1/2 h-[500px] mb-8 lg:mb-0 relative">
+          <div className="absolute inset-0 z-0">
             <Spline scene="https://prod.spline.design/h-MzhlKtinRO8ewm/scene.splinecode" />
-          )}
+          </div>
         </div>
 
         {/* Chatbot Interface */}
