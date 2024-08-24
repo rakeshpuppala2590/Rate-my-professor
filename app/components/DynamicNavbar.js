@@ -3,21 +3,25 @@
 import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { usePathname } from 'next/navigation';
 
 export default function DynamicNavbar() {
   const { isSignedIn, user } = useUser();
+  const pathname = usePathname();
+
+  const isHomePage = pathname === '/';
 
   return (
     <motion.nav 
-      className="fixed top-0 left-0 right-0 z-50 bg-black bg-opacity-30 backdrop-blur-md"
+      className={`fixed top-0 left-0 right-0 z-50 ${isHomePage ? '' : 'bg-black bg-opacity-30 backdrop-blur-md'}`}
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.5 }}
     >
       <div className="container mx-auto px-6 py-3 flex justify-between items-center">
-        <Link href="/">
+        <Link href="/professor">
           <motion.div 
-            className="text-2xl font-bold text-white cursor-pointer"
+            className={`text-2xl font-bold ${isHomePage ? 'text-indigo-800' : 'text-white'}  cursor-pointer`}
             whileHover={{ scale: 1.1 }}
           >
             ProfScore
@@ -26,10 +30,10 @@ export default function DynamicNavbar() {
         
         {isSignedIn ? (
           <div className="flex items-center space-x-6">
-            <NavLink href="/">Home</NavLink>
+            <NavLink href="/professor">Home</NavLink>
             <NavLink href="/search-professors">Professors</NavLink>
             <NavLink href="/team">Team</NavLink>
-            <UserButton afterSignOutUrl="/" />
+            <UserButton />
           </div>
         ) : (
           <SignInButton>
@@ -48,14 +52,15 @@ export default function DynamicNavbar() {
 }
 
 function NavLink({ href, children }) {
-  return (
-    <Link href={href}>
-      <motion.a 
-        className="text-white hover:text-indigo-300 transition duration-300 cursor-pointer"
-        whileHover={{ scale: 1.1 }}
-      >
-        {children}
-      </motion.a>
-    </Link>
-  );
-}
+    return (
+      <Link href={href} passHref>
+        {/* Change motion.a to motion.div and avoid nested <a> */}
+        <motion.div
+          className="text-white hover:text-indigo-300 transition duration-300 cursor-pointer"
+          whileHover={{ scale: 1.1 }}
+        >
+          {children}
+        </motion.div>
+      </Link>
+    );
+  }
