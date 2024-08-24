@@ -1,6 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
+import ChatbotInterface from "../components/ChatBotInterface";
+import DynamicNavbar from "../components/DynamicNavbar";
+// import Spline from '@splinetool/react-spline';
+
+// import Background3D from "../components/Background3D";
+
+// Dynamically import Spline to avoid SSR issues
+const Spline = dynamic(() => import('@splinetool/react-spline').then((mod) => mod.Spline), {
+  ssr: false,
+  loading: () => <p>Loading 3D model...</p>,
+});
 
 export default function Home() {
   const [professorId, setProfessorId] = useState("");
@@ -9,6 +21,11 @@ export default function Home() {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isQuerying, setIsQuerying] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handleSubmit = async () => {
     const extractedId = extractProfessorId(professorId);
@@ -141,38 +158,67 @@ export default function Home() {
     }
   };
 
+  // return (
+  //   <div>
+  //     <h1>RateMyProfessors Feedback Scraper</h1>
+  //     <div>
+  //       <input
+  //         type="text"
+  //         value={professorId}
+  //         onChange={(e) => setProfessorId(e.target.value)}
+  //         placeholder="Enter Professor URL: "
+  //       />
+  //       <button onClick={handleSubmit} disabled={isLoading}>
+  //         {isLoading ? "Scraping..." : "Scrape Feedback"}
+  //       </button>
+  //     </div>
+  //     <div>
+  //       <input
+  //         type="text"
+  //         value={userQuery}
+  //         onChange={(e) => setUserQuery(e.target.value)}
+  //         placeholder="Ask a question about the professor"
+  //       />
+  //       <button onClick={handleQuery} disabled={isQuerying}>
+  //         {isQuerying ? "Querying..." : "Ask Question"}
+  //       </button>
+  //     </div>
+  //     {error && <p style={{ color: "red" }}>Error: {error}</p>}
+  //     {answer && (
+  //       <div>
+  //         <h2>Answer:</h2>
+  //         <p>{answer}</p>
+  //       </div>
+  //     )}
+  //   </div>
+  // );
   return (
-    <div>
-      <h1>RateMyProfessors Feedback Scraper</h1>
-      <div>
-        <input
-          type="text"
-          value={professorId}
-          onChange={(e) => setProfessorId(e.target.value)}
-          placeholder="Enter Professor URL: "
-        />
-        <button onClick={handleSubmit} disabled={isLoading}>
-          {isLoading ? "Scraping..." : "Scrape Feedback"}
-        </button>
-      </div>
-      <div>
-        <input
-          type="text"
-          value={userQuery}
-          onChange={(e) => setUserQuery(e.target.value)}
-          placeholder="Ask a question about the professor"
-        />
-        <button onClick={handleQuery} disabled={isQuerying}>
-          {isQuerying ? "Querying..." : "Ask Question"}
-        </button>
-      </div>
-      {error && <p style={{ color: "red" }}>Error: {error}</p>}
-      {answer && (
-        <div>
-          <h2>Answer:</h2>
-          <p>{answer}</p>
+    <div className="relative min-h-screen bg-gradient-to-br from-indigo-900 to-purple-800 overflow-hidden">
+      <DynamicNavbar />
+      <div className="container mx-auto px-4 py-20 flex flex-col lg:flex-row justify-between items-center">
+        {/* Spline model container */}
+        <div className="w-full lg:w-1/2 h-[500px] mb-8 lg:mb-0">
+          {isClient && (
+            <Spline scene="https://prod.spline.design/h-MzhlKtinRO8ewm/scene.splinecode" />
+          )}
         </div>
-      )}
+
+        {/* Chatbot Interface */}
+        <div className="w-full lg:w-1/2 lg:pl-8">
+          <ChatbotInterface
+            professorId={professorId}
+            setProfessorId={setProfessorId}
+            userQuery={userQuery}
+            setUserQuery={setUserQuery}
+            handleSubmit={handleSubmit}
+            handleQuery={handleQuery}
+            isLoading={isLoading}
+            isQuerying={isQuerying}
+            error={error}
+            answer={answer}
+          />
+        </div>
+      </div>
     </div>
   );
 }
