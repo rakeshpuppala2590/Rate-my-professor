@@ -7,6 +7,7 @@ import { analyzeComments } from '../api/analyze/route';
 export default function Professors() {
   const [professors, setProfessors] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     async function fetchProfessors() {

@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { Pinecone } from "@pinecone-database/pinecone";
 
 const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({ apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY });
 
 const pinecone = new Pinecone({
   apiKey: process.env.PINECONE_API_KEY,
@@ -58,7 +58,7 @@ async function getProfessors(query) {
   return queryResponse.matches
 }
 
-export async function GET(req) {
+export async function GET() {
   try {
     const professors = await getProfessors("professors");
     return NextResponse.json(professors);
