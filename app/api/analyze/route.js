@@ -1,19 +1,19 @@
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY
 });
 
 export async function analyzeComments(professors) {
   try {
     const responses = await Promise.all(professors.map(async (professor) => {
       const response = await openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
+        model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: 'Analyze the professor comments and provide insights.' },
           { role: 'user', content: `Comment: ${professor.comment}. Rating: ${professor.rating}.` },
         ],
-        max_tokens: 150,
+        max_tokens: 1500,
       });
 
       console.log(response)
