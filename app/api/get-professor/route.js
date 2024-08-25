@@ -45,6 +45,32 @@ async function queryPinecone(query) {
     .map((match) => match.metadata?.text || "");
 }
 
+async function getProfessors(query) {
+  const q_embedding = await getEmbedding(query);
+  const index = pinecone.Index("professors-index");
+
+  const queryResponse = await index.query({
+    vector: q_embedding, 
+    topK: 30, 
+    includeMetadata: true,
+  });
+
+  return queryResponse.matches
+}
+
+export async function GET(req) {
+  try {
+    const professors = await getProfessors("professors");
+    return NextResponse.json(professors);
+  } catch (error) {
+    console.error("Error fetching top professors:", error);
+    return NextResponse.json(
+      { error: "An error occurred while fetching the top professors." },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(req) {
   try {
     const { userQuery } = await req.json();
