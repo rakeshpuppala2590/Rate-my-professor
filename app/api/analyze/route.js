@@ -1,19 +1,26 @@
-import OpenAI  from 'openai';
+import OpenAI from 'openai';
 
-export async function analyzeComments(commentsAndRatings) {
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
+export async function analyzeComments(professors) {
   try {
-    const responses = await Promise.all(commentsAndRatings.map(async (entry) => {
+    const responses = await Promise.all(professors.map(async (professor) => {
       const response = await openai.chat.completions.create({
         model: 'gpt-3.5-turbo',
         messages: [
           { role: 'system', content: 'Analyze the professor comments and provide insights.' },
-          { role: 'user', content: `Comment: ${entry.comments}. Rating: ${entry.rating}.` },
+          { role: 'user', content: `Comment: ${professor.comment}. Rating: ${professor.rating}.` },
         ],
         max_tokens: 150,
       });
+
+      console.log(response)
+
       return {
-        comments: entry.comments,
-        rating: entry.rating,
+        comment: professor.comment,
+        rating: professor.rating,
         analysis: response.choices[0].message.content,
       };
     }));
