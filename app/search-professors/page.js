@@ -7,7 +7,6 @@ import { analyzeComments } from '../api/analyze/route';
 export default function Professors() {
   const [professors, setProfessors] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     async function fetchProfessors() {
@@ -31,17 +30,23 @@ export default function Professors() {
       }
     }
 
-    setProfessors(fetchProfessors());
+    fetchProfessors();
   }, []);
 
-  const performAnalysis = async () => {
-    try {
-      const results = await analyzeComments(commentsAndRatings);
-      console.log('Analysis Results:', results);
-    } catch (error) {
-      console.error('Error using analyzeComments:', error);
+  useEffect(() => {
+    if (professors.length > 0) {
+      const performAnalysis = async () => {
+        try {
+          const results = await analyzeComments(professors);
+          console.log('Analysis Results:', results);
+        } catch (error) {
+          console.error('Error using analyzeComments:', error);
+        }
+      };
+
+      performAnalysis();
     }
-  };
+  }, [professors]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 to-purple-800">
@@ -49,6 +54,7 @@ export default function Professors() {
       <div className="container mx-auto px-4 py-20">
         <h1 className="text-4xl font-bold text-white mb-8">Professors List</h1>
         {loading && <p className="text-white">Loading...</p>}
+        {/* Render professors here */}
       </div>
     </div>
   );
