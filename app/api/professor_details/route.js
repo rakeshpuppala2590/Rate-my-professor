@@ -1,7 +1,35 @@
 import { NextResponse } from "next/server";
-import puppeteer from "puppeteer";
+
+let puppeteer;
+let chromium;
+
+if (process.env.NODE_ENV === "production") {
+  puppeteer = require("puppeteer-core");
+  chromium = require("@sparticuz/chromium");
+} else {
+  puppeteer = require("puppeteer");
+}
+
+async function launchBrowser() {
+  console.log("Launching browser...");
+  if (process.env.NODE_ENV === "production") {
+    return await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
+      ignoreHTTPSErrors: true,
+    });
+  } else {
+    return await puppeteer.launch({
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+      headless: "new",
+    });
+  }
+}
 
 export async function POST(request) {
+  let browser;
   try {
     const { professorId } = await request.json();
     if (!professorId) {
@@ -15,11 +43,7 @@ export async function POST(request) {
       ? professorId
       : `https://www.ratemyprofessors.com/professor/${professorId}`;
 
-    console.log("Launching browser...");
-    const browser = await puppeteer.launch({
-      headless: false,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
+    browser = await launchBrowser();
     console.log("Browser launched");
 
     const page = await browser.newPage();
@@ -167,5 +191,9 @@ export async function POST(request) {
       { error: "Failed to scrape data", details: error.message },
       { status: 500 }
     );
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
   }
 }
