@@ -45,7 +45,7 @@ async function queryPinecone(query) {
     .map((match) => match.metadata?.text || "");
 }
 
-async function getTopProfessors(query) {
+async function getProfessors(query) {
   const q_embedding = await getEmbedding(query);
   const index = pinecone.Index("professors-index");
 
@@ -60,8 +60,8 @@ async function getTopProfessors(query) {
 
 export async function GET(req) {
   try {
-    const topProfessors = await getTopProfessors("professors");
-    return NextResponse.json(topProfessors);
+    const professors = await getProfessors("professors");
+    return NextResponse.json(professors);
   } catch (error) {
     console.error("Error fetching top professors:", error);
     return NextResponse.json(

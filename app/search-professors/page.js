@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import DynamicNavbar from '../components/DynamicNavbar';
+import { analyzeComments } from '../api/analyze/route';
 
 export default function Professors() {
   const [professors, setProfessors] = useState([]);
@@ -32,6 +33,15 @@ export default function Professors() {
 
     setProfessors(fetchProfessors());
   }, []);
+
+  const performAnalysis = async () => {
+    try {
+      const results = await analyzeComments(commentsAndRatings);
+      console.log('Analysis Results:', results);
+    } catch (error) {
+      console.error('Error using analyzeComments:', error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 to-purple-800">
