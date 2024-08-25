@@ -1,9 +1,29 @@
 import { NextResponse } from "next/server";
-import axios from "axios";
+import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
 import cheerio from "cheerio";
-import { load } from "cheerio";
+
+async function launchBrowser() {
+  console.log("Launching browser...");
+  try {
+    const executablePath = await chromium.executablePath();
+    console.log("Executable path:", executablePath);
+
+    return await puppeteer.launch({
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: executablePath,
+      headless: chromium.headless,
+      ignoreHTTPSErrors: true,
+    });
+  } catch (error) {
+    console.error("Error launching browser:", error);
+    throw error;
+  }
+}
 
 export async function POST(request) {
+  let browser;
   try {
     const { professorId } = await request.json();
     if (!professorId) {
@@ -17,11 +37,25 @@ export async function POST(request) {
       ? professorId
       : `https://www.ratemyprofessors.com/professor/${professorId}`;
 
-    console.log("Fetching page content...");
-    const response = await axios.get(professorUrl);
-    const html = response.data;
+    console.log("Launching browser...");
+    browser = await launchBrowser();
+    console.log("Browser launched");
 
-    let $ = load(html); // Use load function from cheerio
+    const page = await browser.newPage();
+    await page.setUserAgent(
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    );
+    console.log("New page created");
+
+    console.log("Navigating to URL:", professorUrl);
+    await page.goto(professorUrl, {
+      waitUntil: "networkidle0",
+      timeout: 60000,
+    });
+    console.log("Page loaded");
+
+    const content = await page.content();
+    const $ = cheerio.load(content);
 
     const professorInfo = {
       name: $(".NameTitle__Name-dowf0z-0").text().trim() || "Unknown",
@@ -83,19 +117,18 @@ export async function POST(request) {
 
       feedbacks = [...feedbacks, ...currentFeedbacks];
 
-      const loadMoreButton = $(
+      const loadMoreButton = await page.$(
         ".PaginationButton__StyledPaginationButton-txi1dr-1"
       );
-
-      if (loadMoreButton.length > 0) {
+      if (loadMoreButton) {
         try {
           console.log("Load more button found. Clicking...");
-          await axios.post(professorUrl); // Simulate the button click to load more ratings
-          await new Promise((resolve) => setTimeout(resolve, 3000)); // Wait for the new content to load
+          await loadMoreButton.click();
+          await page.waitForTimeout(3000); // Wait for the new content to load
 
-          const newResponse = await axios.get(professorUrl);
-          const newHtml = newResponse.data;
-          $ = load(newHtml); // Re-load the page content after "Load More"
+          // Re-load the page content after clicking "Load More"
+          const newContent = await page.content();
+          $ = cheerio.load(newContent);
         } catch (error) {
           console.error("Error clicking load more button:", error.message);
           hasMoreRatings = false;
@@ -105,6 +138,8 @@ export async function POST(request) {
         hasMoreRatings = false;
       }
     }
+
+    await browser.close();
 
     if (!professorInfo.name || professorInfo.name === "Unknown") {
       return NextResponse.json(
@@ -116,9 +151,14 @@ export async function POST(request) {
     return NextResponse.json({ professorInfo, feedbacks });
   } catch (error) {
     console.error("Error scraping data:", error.message);
+    console.error(error.stack);
     return NextResponse.json(
       { error: "Failed to scrape data", details: error.message },
       { status: 500 }
     );
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
   }
 }

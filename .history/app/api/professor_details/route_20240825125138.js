@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import axios from "axios";
 import cheerio from "cheerio";
-import { load } from "cheerio";
 
 export async function POST(request) {
   try {
@@ -17,12 +16,18 @@ export async function POST(request) {
       ? professorId
       : `https://www.ratemyprofessors.com/professor/${professorId}`;
 
+    // Fetch the page content
     console.log("Fetching page content...");
-    const response = await axios.get(professorUrl);
-    const html = response.data;
+    const response = await axios.get(professorUrl, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+      },
+    });
 
-    let $ = load(html); // Use load function from cheerio
+    let $ = cheerio.load(response.data);
 
+    // Extract professor info
     const professorInfo = {
       name: $(".NameTitle__Name-dowf0z-0").text().trim() || "Unknown",
       department: $(".NameTitle__Title-dowf0z-1").text().trim() || "Unknown",
@@ -41,6 +46,7 @@ export async function POST(request) {
         .get(),
     };
 
+    // Extract feedbacks
     let feedbacks = [];
     let hasMoreRatings = true;
 
@@ -83,25 +89,23 @@ export async function POST(request) {
 
       feedbacks = [...feedbacks, ...currentFeedbacks];
 
+      // Check if there's a "Load More" button
       const loadMoreButton = $(
         ".PaginationButton__StyledPaginationButton-txi1dr-1"
       );
 
       if (loadMoreButton.length > 0) {
-        try {
-          console.log("Load more button found. Clicking...");
-          await axios.post(professorUrl); // Simulate the button click to load more ratings
-          await new Promise((resolve) => setTimeout(resolve, 3000)); // Wait for the new content to load
+        // Append 'page' parameter to the URL if it's not there
+        const nextPageUrl = `${professorUrl}?page=${feedbacks.length / 20 + 1}`;
+        const nextPageResponse = await axios.get(nextPageUrl, {
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+          },
+        });
 
-          const newResponse = await axios.get(professorUrl);
-          const newHtml = newResponse.data;
-          $ = load(newHtml); // Re-load the page content after "Load More"
-        } catch (error) {
-          console.error("Error clicking load more button:", error.message);
-          hasMoreRatings = false;
-        }
+        $ = cheerio.load(nextPageResponse.data);
       } else {
-        console.log("Load more button not found.");
         hasMoreRatings = false;
       }
     }

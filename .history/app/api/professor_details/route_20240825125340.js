@@ -21,7 +21,7 @@ export async function POST(request) {
     const response = await axios.get(professorUrl);
     const html = response.data;
 
-    let $ = load(html); // Use load function from cheerio
+    const $ = load(html); // Use load function from cheerio
 
     const professorInfo = {
       name: $(".NameTitle__Name-dowf0z-0").text().trim() || "Unknown",
