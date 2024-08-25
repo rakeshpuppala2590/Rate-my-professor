@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import puppeteer from "puppeteer";
+import axios from "axios";
+import cheerio from "cheerio";
+import { load } from "cheerio";
 
 export async function POST(request) {
   try {
@@ -15,131 +17,85 @@ export async function POST(request) {
       ? professorId
       : `https://www.ratemyprofessors.com/professor/${professorId}`;
 
-    console.log("Launching browser...");
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
-    console.log("Browser launched");
+    console.log("Fetching page content...");
+    const response = await axios.get(professorUrl);
+    const html = response.data;
 
-    const page = await browser.newPage();
-    await page.setUserAgent(
-      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    );
-    console.log("New page created");
+    let $ = load(html); // Use load function from cheerio
 
-    console.log("Navigating to URL:", professorUrl);
-    await page.goto(professorUrl, {
-      waitUntil: "networkidle0",
-      timeout: 160000,
-    });
-    console.log("Page loaded");
-
-    // Wait for the professor info section to load
-    await page.waitForSelector(".TeacherInfo__StyledTeacher-ti1fio-1", {
-      timeout: 10000,
-    });
-
-    const professorInfo = await page.evaluate(() => {
-      const nameElement = document.querySelector(".NameTitle__Name-dowf0z-0");
-      const departmentElement = document.querySelector(
-        ".NameTitle__Title-dowf0z-1"
-      );
-      const ratingElement = document.querySelector(
-        ".RatingValue__Numerator-qw8sqy-2"
-      );
-      const numRatingsElement = document.querySelector(
-        ".RatingValue__NumRatings-qw8sqy-0"
-      );
-      const wouldTakeAgainElement = document.querySelector(
-        ".FeedbackItem__FeedbackNumber-uof32n-1"
-      );
-      const difficultyElement = document.querySelectorAll(
-        ".FeedbackItem__FeedbackNumber-uof32n-1"
-      )[1];
-      const tagsElements = document.querySelectorAll(
-        ".TeacherTags__TagsContainer-sc-16vmh1y-0 .Tag-bs9vf4-0"
-      );
-
-      return {
-        name: nameElement ? nameElement.textContent.trim() : "Unknown",
-        department: departmentElement
-          ? departmentElement.textContent.trim()
-          : "Unknown",
-        overallRating: ratingElement ? ratingElement.textContent.trim() : "N/A",
-        numRatings: numRatingsElement
-          ? numRatingsElement.textContent.match(/\d+/)[0]
-          : "0",
-        wouldTakeAgain: wouldTakeAgainElement
-          ? wouldTakeAgainElement.textContent.trim()
-          : "N/A",
-        difficulty: difficultyElement
-          ? difficultyElement.textContent.trim()
-          : "N/A",
-        topTags: Array.from(tagsElements).map((tag) => tag.textContent.trim()),
-      };
-    });
+    const professorInfo = {
+      name: $(".NameTitle__Name-dowf0z-0").text().trim() || "Unknown",
+      department: $(".NameTitle__Title-dowf0z-1").text().trim() || "Unknown",
+      overallRating:
+        $(".RatingValue__Numerator-qw8sqy-2").text().trim() || "N/A",
+      numRatings:
+        $(".RatingValue__NumRatings-qw8sqy-0").text().match(/\d+/)?.[0] || "0",
+      wouldTakeAgain:
+        $(".FeedbackItem__FeedbackNumber-uof32n-1").first().text().trim() ||
+        "N/A",
+      difficulty:
+        $(".FeedbackItem__FeedbackNumber-uof32n-1").last().text().trim() ||
+        "N/A",
+      topTags: $(".TeacherTags__TagsContainer-sc-16vmh1y-0 .Tag-bs9vf4-0")
+        .map((i, el) => $(el).text().trim())
+        .get(),
+    };
 
     let feedbacks = [];
     let hasMoreRatings = true;
 
     while (hasMoreRatings) {
-      // Wait for the feedback section to load
-      await page.waitForSelector(".Rating__RatingBody-sc-1rhvpxz-0", {
-        timeout: 10000,
-      });
-
-      // Scrape the current page of feedbacks
-      const currentFeedbacks = await page.evaluate(() => {
-        const feedbackElements = document.querySelectorAll(
-          ".Rating__RatingBody-sc-1rhvpxz-0"
-        );
-        return Array.from(feedbackElements).map((feedbackEl) => {
-          return {
-            course:
-              feedbackEl
-                .querySelector(".RatingHeader__StyledClass-sc-1dlkqw1-3")
-                ?.textContent.trim() || "",
-            date:
-              feedbackEl
-                .querySelector(".TimeStamp__StyledTimeStamp-sc-9q2r30-0")
-                ?.textContent.trim() || "",
-            qualityRating:
-              feedbackEl
-                .querySelector(
-                  ".CardNumRating__CardNumRatingNumber-sc-17t4b9u-2"
-                )
-                ?.textContent.trim() || "",
-            difficultyRating:
-              feedbackEl
-                .querySelectorAll(
-                  ".CardNumRating__CardNumRatingNumber-sc-17t4b9u-2"
-                )[1]
-                ?.textContent.trim() || "",
-            comments:
-              feedbackEl
-                .querySelector(".Comments__StyledComments-dzzyvm-0")
-                ?.textContent.trim() || "",
-            tags: Array.from(
-              feedbackEl.querySelectorAll(
-                ".RatingTags__StyledTags-sc-1boeqx2-0 .Tag-bs9vf4-0"
-              )
-            ).map((tag) => tag.textContent.trim()),
-          };
-        });
-      });
+      const currentFeedbacks = $(".Rating__RatingBody-sc-1rhvpxz-0")
+        .map((i, feedbackEl) => ({
+          course:
+            $(feedbackEl)
+              .find(".RatingHeader__StyledClass-sc-1dlkqw1-3")
+              .text()
+              .trim() || "",
+          date:
+            $(feedbackEl)
+              .find(".TimeStamp__StyledTimeStamp-sc-9q2r30-0")
+              .text()
+              .trim() || "",
+          qualityRating:
+            $(feedbackEl)
+              .find(".CardNumRating__CardNumRatingNumber-sc-17t4b9u-2")
+              .first()
+              .text()
+              .trim() || "",
+          difficultyRating:
+            $(feedbackEl)
+              .find(".CardNumRating__CardNumRatingNumber-sc-17t4b9u-2")
+              .last()
+              .text()
+              .trim() || "",
+          comments:
+            $(feedbackEl)
+              .find(".Comments__StyledComments-dzzyvm-0")
+              .text()
+              .trim() || "",
+          tags: $(feedbackEl)
+            .find(".RatingTags__StyledTags-sc-1boeqx2-0 .Tag-bs9vf4-0")
+            .map((j, tag) => $(tag).text().trim())
+            .get(),
+        }))
+        .get();
 
       feedbacks = [...feedbacks, ...currentFeedbacks];
 
-      // Check if there's a "Load More Ratings" button
-      const loadMoreButton = await page.$(
+      const loadMoreButton = $(
         ".PaginationButton__StyledPaginationButton-txi1dr-1"
       );
-      if (loadMoreButton) {
+
+      if (loadMoreButton.length > 0) {
         try {
           console.log("Load more button found. Clicking...");
-          await loadMoreButton.click();
-          await page.waitForTimeout(3000); // Wait for the new content to load
+          await axios.post(professorUrl); // Simulate the button click to load more ratings
+          await new Promise((resolve) => setTimeout(resolve, 3000)); // Wait for the new content to load
+
+          const newResponse = await axios.get(professorUrl);
+          const newHtml = newResponse.data;
+          $ = load(newHtml); // Re-load the page content after "Load More"
         } catch (error) {
           console.error("Error clicking load more button:", error.message);
           hasMoreRatings = false;
@@ -149,8 +105,6 @@ export async function POST(request) {
         hasMoreRatings = false;
       }
     }
-
-    await browser.close();
 
     if (!professorInfo.name || professorInfo.name === "Unknown") {
       return NextResponse.json(
@@ -162,7 +116,6 @@ export async function POST(request) {
     return NextResponse.json({ professorInfo, feedbacks });
   } catch (error) {
     console.error("Error scraping data:", error.message);
-    console.error(error.stack);
     return NextResponse.json(
       { error: "Failed to scrape data", details: error.message },
       { status: 500 }
