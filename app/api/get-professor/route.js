@@ -1,14 +1,9 @@
 import { HfInference } from "@huggingface/inference";
-import { OpenAI } from "openai";
 import { NextResponse } from "next/server";
 import { Pinecone } from "@pinecone-database/pinecone";
 
 const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
-const openai = new OpenAI({ apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY });
-
-const pinecone = new Pinecone({
-  apiKey: process.env.PINECONE_API_KEY,
-});
+const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
 
 async function getEmbedding(text) {
   const response = await hf.featureExtraction({
@@ -16,10 +11,7 @@ async function getEmbedding(text) {
     inputs: text,
   });
 
-  if (
-    Array.isArray(response) &&
-    response.every((item) => typeof item === "number")
-  ) {
+  if (Array.isArray(response) && response.every((item) => typeof item === "number")) {
     return response;
   } else if (Array.isArray(response) && Array.isArray(response[0])) {
     return response[0];
@@ -30,37 +22,68 @@ async function getEmbedding(text) {
   }
 }
 
-async function queryPinecone(query) {
-  const q_embedding = await getEmbedding(query);
+function parseProfessorInfo(text) {
+  const professorInfo = {};
+
+  const nameMatch = text.match(/Name:\s*(.*?),\s*Department/);
+  const departmentMatch = text.match(/Department:\s*(.*?),\s*Overall/);
+  const overallRatingMatch = text.match(/Overall Rating:\s*([\d.]+)/);
+  const numberOfRatingsMatch = text.match(/Number of Ratings:\s*(\d+)/);
+  const wouldTakeAgainMatch = text.match(/Would Take Again:\s*([\d%]+)/);
+  const difficultyMatch = text.match(/Difficulty:\s*([\d.]+)/);
+  const topTagsMatch = text.match(/Top Tags:\s*(.*)/);
+
+  professorInfo.name = nameMatch ? nameMatch[1] : null;
+  professorInfo.department = departmentMatch ? departmentMatch[1] : null;
+  professorInfo.overallRating = overallRatingMatch ? parseFloat(overallRatingMatch[1]) : null;
+  professorInfo.numberOfRatings = numberOfRatingsMatch ? parseInt(numberOfRatingsMatch[1], 10) : null;
+  professorInfo.wouldTakeAgain = wouldTakeAgainMatch ? wouldTakeAgainMatch[1] : null;
+  professorInfo.difficulty = difficultyMatch ? parseFloat(difficultyMatch[1]) : null;
+  professorInfo.topTags = topTagsMatch ? topTagsMatch[1].split(',').map(tag => tag.trim()) : [];
+
+  return professorInfo;
+}
+
+async function getProfessors() {
   const index = pinecone.Index("professors-index");
 
   const queryResponse = await index.query({
-    vector: q_embedding,
-    topK: 3,
+    vector: await getEmbedding("professor"),
+    topK: 1000,
     includeMetadata: true,
   });
 
-  return queryResponse.matches
-    .filter((match) => match.metadata?.text)
-    .map((match) => match.metadata?.text || "");
+  console.log(queryResponse)
+
+  const processedProfessors = queryResponse.matches
+    .map(match => ({
+      id: match.id,
+      score: match.score,
+      metadata: parseProfessorInfo(match.metadata.text),
+    }))
+    // .filter(prof => 
+    //   prof.metadata.name &&                                         
+    //   prof.metadata.department &&
+    //   prof.metadata.overallRating !== null &&
+    //   prof.metadata.numberOfRatings !== null
+    // );
+
+  const uniqueProfessors = Array.from(
+    new Map(processedProfessors.map(item => [item.metadata.name, item])).values()
+  );
+
+  const sortedProfessors = uniqueProfessors.sort((a, b) => 
+    b.metadata.overallRating - a.metadata.overallRating
+  );
+
+  console.log(processedProfessors)
+
+  return sortedProfessors.slice(0, 30);
 }
 
-async function getProfessors(query) {
-  const q_embedding = await getEmbedding(query);
-  const index = pinecone.Index("professors-index");
-
-  const queryResponse = await index.query({
-    vector: q_embedding, 
-    topK: 30, 
-    includeMetadata: true,
-  });
-
-  return queryResponse.matches
-}
-
-export async function GET(req) {
+export async function GET() {
   try {
-    const professors = await getProfessors("professors");
+    const professors = await getProfessors();
     return NextResponse.json(professors);
   } catch (error) {
     console.error("Error fetching top professors:", error);
