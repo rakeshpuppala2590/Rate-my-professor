@@ -56,19 +56,14 @@ async function embedAndStore(chunks, source) {
 }
 
 export async function POST(req) {
-  const { text, source, chunkIndex, totalChunks } = await req.json();
+  const { text, source } = await req.json();
 
   try {
     const chunks = await splitText(text);
     await embedAndStore(chunks, source);
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        chunks: chunks.length,
-        processedChunk: chunkIndex + 1,
-        totalChunks: totalChunks,
-      }),
+      JSON.stringify({ success: true, chunks: chunks.length }),
       {
         status: 200,
         headers: {

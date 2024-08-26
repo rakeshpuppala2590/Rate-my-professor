@@ -4,7 +4,7 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import ChatbotInterface from "../components/ChatBotInterface";
 import DynamicNavbar from "../components/DynamicNavbar";
-import Spline from "@splinetool/react-spline";
+import Spline from '@splinetool/react-spline';
 
 // import Background3D from "../components/Background3D";
 
@@ -105,43 +105,25 @@ export default function Home() {
 
   const sendToEmbeddingAPI = async (source, professorInfo, feedbacks) => {
     try {
-      const text = `Professor Information: ${professorInfo}\n\nFeedbacks: ${feedbacks}`;
-      const chunkSize = 5000; // Adjust this value based on your needs
-      const chunks = [];
+      const response = await fetch("/api/add-professor", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          source,
+          text: `Professor Information: ${professorInfo}\n\nFeedbacks: ${feedbacks}`,
+        }),
+      });
 
-      for (let i = 0; i < text.length; i += chunkSize) {
-        chunks.push(text.slice(i, i + chunkSize));
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      for (let i = 0; i < chunks.length; i++) {
-        const response = await fetch("/api/add-professor", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            source,
-            text: chunks[i],
-            chunkIndex: i,
-            totalChunks: chunks.length,
-          }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(
-            `HTTP error! status: ${response.status}, message: ${errorData.error}`
-          );
-        }
-
-        const result = await response.json();
-        console.log(`Chunk ${i + 1}/${chunks.length} processed:`, result);
-      }
-
-      console.log("All chunks processed successfully");
+      const result = await response.json();
+      console.log("Embedding and storage result:", result);
     } catch (error) {
       console.error("Error sending data for embedding:", error);
-      setError(`Error: ${error.message}`);
     }
   };
 
