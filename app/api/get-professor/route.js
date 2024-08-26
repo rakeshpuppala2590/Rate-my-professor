@@ -51,7 +51,7 @@ async function getProfessors() {
 
   const queryResponse = await index.query({
     vector: await getEmbedding("professor"),
-    topK: 1000,
+    topK: 100,
     includeMetadata: true,
   });
 
@@ -77,8 +77,6 @@ async function getProfessors() {
   const sortedProfessors = uniqueProfessors.sort((a, b) => 
     b.metadata.overallRating - a.metadata.overallRating
   );
-
-  console.log(processedProfessors)
 
   return sortedProfessors.slice(0, 30);
 }

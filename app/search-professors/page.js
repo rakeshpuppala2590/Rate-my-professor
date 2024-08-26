@@ -47,7 +47,7 @@ export default function Professors() {
             <li key={professor.id} className="mb-4 bg-purple-700 p-4 rounded-lg">
               <h2 className="text-xl font-semibold">{index + 1}. {professor.metadata.name}</h2>
               <p>Department: {professor.metadata.department}</p>
-              <p>Overall Rating: {professor.metadata.overallRating.toFixed(1)}</p>
+              <p>Overall Rating: {professor.metadata.overallRating.toFixed(1)}</p>jhg
               <p>Number of Ratings: {professor.metadata.numberOfRatings}</p>
               <p>Would Take Again: {professor.metadata.wouldTakeAgain || 'N/A'}</p>
               <p>Difficulty: {professor.metadata.difficulty ? professor.metadata.difficulty.toFixed(1) : 'N/A'}</p>
