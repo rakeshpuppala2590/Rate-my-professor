@@ -3,10 +3,7 @@ import { NextResponse } from "next/server";
 import { Pinecone } from "@pinecone-database/pinecone";
 
 const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
-
-const pinecone = new Pinecone({
-  apiKey: process.env.PINECONE_API_KEY,
-});
+const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
 
 async function getEmbedding(text) {
   const response = await hf.featureExtraction({
@@ -51,23 +48,25 @@ async function getProfessors() {
   const index = pinecone.Index("professors-index");
 
   const queryResponse = await index.query({
-    vector: await getEmbedding("professors"),
-    topK: 100,
+    vector: await getEmbedding("professor"),
+    topK: 1000,
     includeMetadata: true,
   });
+
+  console.log(queryResponse)
 
   const processedProfessors = queryResponse.matches
     .map(match => ({
       id: match.id,
       score: match.score,
-      metadata: parseProfessorInfo(match.metadata.text)
+      metadata: parseProfessorInfo(match.metadata.text),
     }))
-    .filter(prof => 
-      prof.metadata.name && 
-      prof.metadata.department && 
-      prof.metadata.overallRating !== null &&
-      prof.metadata.numberOfRatings !== null
-    );
+    // .filter(prof => 
+    //   prof.metadata.name &&                                         
+    //   prof.metadata.department &&
+    //   prof.metadata.overallRating !== null &&
+    //   prof.metadata.numberOfRatings !== null
+    // );
 
   const uniqueProfessors = Array.from(
     new Map(processedProfessors.map(item => [item.metadata.name, item])).values()
@@ -76,6 +75,8 @@ async function getProfessors() {
   const sortedProfessors = uniqueProfessors.sort((a, b) => 
     b.metadata.overallRating - a.metadata.overallRating
   );
+
+  console.log(processedProfessors)
 
   return sortedProfessors.slice(0, 30);
 }

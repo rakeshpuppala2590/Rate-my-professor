@@ -26,7 +26,6 @@ export default function Professors() {
       }
   
       const data = await response.json();
-      console.log("Professors received in component:", data.length);
       setProfessors(data);
     } catch (err) {
       setError(err.message);
