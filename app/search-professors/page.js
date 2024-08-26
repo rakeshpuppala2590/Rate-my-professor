@@ -2,11 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import DynamicNavbar from '../components/DynamicNavbar';
+import { motion } from 'framer-motion';
+import { Star, ThumbsUp, Book } from 'lucide-react';
 
 export default function Professors() {
   const [professors, setProfessors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [sortBy, setSortBy] = useState('overallRating');
 
   useEffect(() => {
     fetchProfessors();
@@ -26,7 +29,13 @@ export default function Professors() {
       }
   
       const data = await response.json();
-      setProfessors(data);
+
+      // Sort the data by overall rating and take only the top 15
+      const sortedData = data.sort((a, b) => b.metadata.overallRating - a.metadata.overallRating);
+
+      const top15 = sortedData.slice(0, 15);
+
+      setProfessors(top15);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -34,27 +43,109 @@ export default function Professors() {
     }
   }
 
-  if (loading) return <p className="text-white">Loading...</p>;
-  if (error) return <p className="text-red-500">{error}</p>;
+  const sortProfessors = (criteria) => {
+    setSortBy(criteria);
+    const sorted = [...professors].sort((a, b) => b.metadata[criteria] - a.metadata[criteria]);
+    setProfessors(sorted);
+  };
+
+  if (loading) return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-900 to-purple-800 flex items-center justify-center">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.5 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.5 }}
+        className="text-white text-2xl font-bold"
+      >
+        Loading...
+      </motion.div>
+    </div>
+  );
+
+  if (error) return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-900 to-purple-800 flex items-center justify-center">
+      <motion.div
+        initial={{ opacity: 0, y: -50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="text-red-500 text-2xl font-bold"
+      >
+        {error}
+      </motion.div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 to-purple-800">
       <DynamicNavbar />
       <div className="container mx-auto px-4 py-20">
-        <h1 className="text-4xl font-bold text-white mb-8">Top 30 Professors (Sorted by Rating)</h1>
-        <ul className="text-white">
+        <motion.h1
+          initial={{ opacity: 0, y: -50 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="text-4xl font-bold text-white mb-8 text-center"
+        >
+          Top 15 Professors
+        </motion.h1>
+        <p className="text-white text-center mb-4">Showing {professors.length} professors</p>
+        <div className="mb-6 flex justify-center space-x-4">
+          <button
+            onClick={() => sortProfessors('overallRating')}
+            className={`px-4 py-2 rounded-full ${sortBy === 'overallRating' ? 'bg-purple-600 text-white' : 'bg-purple-200 text-purple-800'}`}
+          >
+            Sort by Rating
+          </button>
+          <button
+            onClick={() => sortProfessors('numberOfRatings')}
+            className={`px-4 py-2 rounded-full ${sortBy === 'numberOfRatings' ? 'bg-purple-600 text-white' : 'bg-purple-200 text-purple-800'}`}
+          >
+            Sort by Popularity
+          </button>
+        </div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4"
+        >
           {professors.map((professor, index) => (
-            <li key={professor.id} className="mb-4 bg-purple-700 p-4 rounded-lg">
-              <h2 className="text-xl font-semibold">{index + 1}. {professor.metadata.name}</h2>
-              <p>Department: {professor.metadata.department}</p>
-              <p>Overall Rating: {professor.metadata.overallRating.toFixed(1)}</p>
-              <p>Number of Ratings: {professor.metadata.numberOfRatings}</p>
-              <p>Would Take Again: {professor.metadata.wouldTakeAgain || 'N/A'}</p>
-              <p>Difficulty: {professor.metadata.difficulty ? professor.metadata.difficulty.toFixed(1) : 'N/A'}</p>
-              <p>Top Tags: {professor.metadata.topTags.length > 0 ? professor.metadata.topTags.join(", ") : 'N/A'}</p>
-            </li>
+            <motion.div
+              key={professor.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: index * 0.05 }}
+              className="bg-white rounded-lg shadow-lg overflow-hidden transform hover:scale-105 transition-transform duration-200"
+            >
+              <div className="bg-purple-600 p-4 h-24 flex flex-col justify-center">
+                <h2 className="text-xl font-semibold text-white truncate">{professor.metadata.name}</h2>
+                <p className="text-purple-200 truncate">{professor.metadata.department}</p>
+              </div>
+              <div className="p-4">
+                <div className="flex items-center mb-2">
+                  <Star className="text-yellow-400 mr-2" />
+                  <span className="font-bold">{professor.metadata.overallRating.toFixed(1)}</span>
+                  <span className="text-gray-600 ml-2">({professor.metadata.numberOfRatings})</span>
+                </div>
+                <div className="flex items-center mb-2">
+                  <ThumbsUp className="text-green-500 mr-2" />
+                  <span>{professor.metadata.wouldTakeAgain || 'N/A'}</span>
+                </div>
+                <div className="flex items-center mb-2">
+                  <Book className="text-blue-500 mr-2" />
+                  <span>Difficulty: {professor.metadata.difficulty ? professor.metadata.difficulty.toFixed(1) : 'N/A'}</span>
+                </div>
+                <div className="mt-4">
+                  <p className="text-sm text-gray-600">Top Tags:</p>
+                  <div className="flex flex-wrap mt-1">
+                    {professor.metadata.topTags.length > 0 ? professor.metadata.topTags.map((tag, index) => (
+                      <span key={index} className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full mr-1 mb-1">{tag}</span>
+                    )) : <span className="text-gray-500">N/A</span>}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           ))}
-        </ul>
+        </motion.div>
       </div>
     </div>
   );
