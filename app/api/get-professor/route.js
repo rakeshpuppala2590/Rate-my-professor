@@ -1,9 +1,11 @@
 import { HfInference } from "@huggingface/inference";
 import { NextResponse } from "next/server";
 import { Pinecone } from "@pinecone-database/pinecone";
+import OpenAI from "openai";
 
 const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
 const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
+const openai = new OpenAI({ apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY });
 
 async function getEmbedding(text) {
   const response = await hf.featureExtraction({
@@ -61,12 +63,12 @@ async function getProfessors() {
       score: match.score,
       metadata: parseProfessorInfo(match.metadata.text),
     }))
-    // .filter(prof => 
-    //   prof.metadata.name &&                                         
-    //   prof.metadata.department &&
-    //   prof.metadata.overallRating !== null &&
-    //   prof.metadata.numberOfRatings !== null
-    // );
+    .filter(prof => 
+      prof.metadata.name &&                                         
+      prof.metadata.department &&
+      prof.metadata.overallRating !== null &&
+      prof.metadata.numberOfRatings !== null
+    );
 
   const uniqueProfessors = Array.from(
     new Map(processedProfessors.map(item => [item.metadata.name, item])).values()
@@ -92,6 +94,18 @@ export async function GET() {
       { status: 500 }
     );
   }
+}
+
+async function queryPinecone(userQuery) {
+  const index = pinecone.Index("professors-index");
+  const queryEmbedding = await getEmbedding(userQuery);
+  const queryResponse = await index.query({
+    vector: queryEmbedding,
+    topK: 5,
+    includeMetadata: true,
+  });
+
+  return queryResponse.matches.map(match => match.metadata.text);
 }
 
 export async function POST(req) {
