@@ -55,8 +55,6 @@ async function getProfessors() {
     includeMetadata: true,
   });
 
-  console.log(queryResponse)
-
   const processedProfessors = queryResponse.matches
     .map(match => ({
       id: match.id,
