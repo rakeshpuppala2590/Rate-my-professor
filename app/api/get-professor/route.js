@@ -13,7 +13,10 @@ async function getEmbedding(text) {
     inputs: text,
   });
 
-  if (Array.isArray(response) && response.every((item) => typeof item === "number")) {
+  if (
+    Array.isArray(response) &&
+    response.every((item) => typeof item === "number")
+  ) {
     return response;
   } else if (Array.isArray(response) && Array.isArray(response[0])) {
     return response[0];
@@ -37,11 +40,21 @@ function parseProfessorInfo(text) {
 
   professorInfo.name = nameMatch ? nameMatch[1] : null;
   professorInfo.department = departmentMatch ? departmentMatch[1] : null;
-  professorInfo.overallRating = overallRatingMatch ? parseFloat(overallRatingMatch[1]) : null;
-  professorInfo.numberOfRatings = numberOfRatingsMatch ? parseInt(numberOfRatingsMatch[1], 10) : null;
-  professorInfo.wouldTakeAgain = wouldTakeAgainMatch ? wouldTakeAgainMatch[1] : null;
-  professorInfo.difficulty = difficultyMatch ? parseFloat(difficultyMatch[1]) : null;
-  professorInfo.topTags = topTagsMatch ? topTagsMatch[1].split(',').map(tag => tag.trim()) : [];
+  professorInfo.overallRating = overallRatingMatch
+    ? parseFloat(overallRatingMatch[1])
+    : null;
+  professorInfo.numberOfRatings = numberOfRatingsMatch
+    ? parseInt(numberOfRatingsMatch[1], 10)
+    : null;
+  professorInfo.wouldTakeAgain = wouldTakeAgainMatch
+    ? wouldTakeAgainMatch[1]
+    : null;
+  professorInfo.difficulty = difficultyMatch
+    ? parseFloat(difficultyMatch[1])
+    : null;
+  professorInfo.topTags = topTagsMatch
+    ? topTagsMatch[1].split(",").map((tag) => tag.trim())
+    : [];
 
   return professorInfo;
 }
@@ -56,24 +69,27 @@ async function getProfessors() {
   });
 
   const processedProfessors = queryResponse.matches
-    .map(match => ({
+    .map((match) => ({
       id: match.id,
       score: match.score,
       metadata: parseProfessorInfo(match.metadata.text),
     }))
-    .filter(prof => 
-      prof.metadata.name &&                                         
-      prof.metadata.department &&
-      prof.metadata.overallRating !== null &&
-      prof.metadata.numberOfRatings !== null
+    .filter(
+      (prof) =>
+        prof.metadata.name &&
+        prof.metadata.department &&
+        prof.metadata.overallRating !== null &&
+        prof.metadata.numberOfRatings !== null
     );
 
   const uniqueProfessors = Array.from(
-    new Map(processedProfessors.map(item => [item.metadata.name, item])).values()
+    new Map(
+      processedProfessors.map((item) => [item.metadata.name, item])
+    ).values()
   );
 
-  const sortedProfessors = uniqueProfessors.sort((a, b) => 
-    b.metadata.overallRating - a.metadata.overallRating
+  const sortedProfessors = uniqueProfessors.sort(
+    (a, b) => b.metadata.overallRating - a.metadata.overallRating
   );
 
   return sortedProfessors.slice(0, 30);
@@ -94,14 +110,14 @@ export async function GET() {
 
 async function queryPinecone(userQuery) {
   const index = pinecone.Index("professors-index");
-  const queryEmbedding = await getEmbedding(userQuery);
   const queryResponse = await index.query({
-    vector: queryEmbedding,
-    topK: 5,
+    vector: await getEmbedding(userQuery),
+    topK: 100,
     includeMetadata: true,
   });
 
-  return queryResponse.matches.map(match => match.metadata.text);
+  console.log(queryPinecone);
+  return queryResponse.matches.map((match) => match.metadata.text);
 }
 
 export async function POST(req) {
