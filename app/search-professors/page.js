@@ -179,7 +179,7 @@ export default function Professors() {
               transition={{ duration: 0.5 }}
               className="text-4xl font-bold text-white mb-8 text-center"
             >
-              Top 15 Professors
+                Professors
             </motion.h1>
             <div className="mb-6 flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
           <div className="relative">
