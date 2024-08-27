@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import DynamicNavbar from "../components/DynamicNavbar";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, ThumbsUp, Book, X } from "lucide-react";
+import { Star, ThumbsUp, Book, X, Search } from "lucide-react";
 
 // Modal component
 const Modal = ({ isOpen, onClose, professor }) => {
@@ -78,14 +78,26 @@ const Modal = ({ isOpen, onClose, professor }) => {
 
 export default function Professors() {
   const [professors, setProfessors] = useState([]);
+  const [filteredProfessors, setFilteredProfessors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sortBy, setSortBy] = useState("overallRating");
   const [selectedProfessor, setSelectedProfessor] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchProfessors();
   }, []);
+
+  useEffect(() => {
+    const filtered = professors.filter(
+      (professor) =>
+        professor.metadata.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        professor.metadata.department.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredProfessors(filtered);
+  }, [searchTerm, professors]);
+
 
   async function fetchProfessors() {
     try {
@@ -102,14 +114,13 @@ export default function Professors() {
 
       const data = await response.json();
 
-      // Sort the data by overall rating and take only the top 15
+      // Sort the data by overall rating
       const sortedData = data.sort(
         (a, b) => b.metadata.overallRating - a.metadata.overallRating
       );
 
-      const top15 = sortedData.slice(0, 15);
-
-      setProfessors(top15);
+      setProfessors(sortedData);
+      setFilteredProfessors(sortedData);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -117,12 +128,17 @@ export default function Professors() {
     }
   }
 
+
   const sortProfessors = (criteria) => {
     setSortBy(criteria);
-    const sorted = [...professors].sort(
+    const sorted = [...filteredProfessors].sort(
       (a, b) => b.metadata[criteria] - a.metadata[criteria]
     );
-    setProfessors(sorted);
+    setFilteredProfessors(sorted);
+  };
+
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
   };
 
   if (loading)
@@ -165,27 +181,37 @@ export default function Professors() {
             >
               Top 15 Professors
             </motion.h1>
-            <div className="mb-6 flex justify-center space-x-4">
-              <button
-                onClick={() => sortProfessors('overallRating')}
-                className={`px-4 py-2 rounded-full ${sortBy === 'overallRating' ? 'bg-purple-600 text-white' : 'bg-purple-200 text-purple-800'}`}
-              >
-                Sort by Rating
-              </button>
-              <button
-                onClick={() => sortProfessors('numberOfRatings')}
-                className={`px-4 py-2 rounded-full ${sortBy === 'numberOfRatings' ? 'bg-purple-600 text-white' : 'bg-purple-200 text-purple-800'}`}
-              >
-                Sort by Popularity
-              </button>
-            </div>
+            <div className="mb-6 flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search professors..."
+              value={searchTerm}
+              onChange={handleSearch}
+              className="pl-10 pr-4 py-2 rounded-full bg-white text-purple-800 focus:outline-none focus:ring-2 focus:ring-purple-600"
+            />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-800" size={20} />
+          </div>
+          <button
+            onClick={() => sortProfessors('overallRating')}
+            className={`px-4 py-2 rounded-full ${sortBy === 'overallRating' ? 'bg-purple-600 text-white' : 'bg-purple-200 text-purple-800'}`}
+          >
+            Sort by Rating
+          </button>
+          <button
+            onClick={() => sortProfessors('numberOfRatings')}
+            className={`px-4 py-2 rounded-full ${sortBy === 'numberOfRatings' ? 'bg-purple-600 text-white' : 'bg-purple-200 text-purple-800'}`}
+          >
+            Sort by Popularity
+          </button>
+        </div>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4"
             >
-              {professors.map((professor, index) => (
+              {filteredProfessors.map((professor, index) => (
                 <motion.div
                   key={professor.id}
                   initial={{ opacity: 0, y: 20 }}
