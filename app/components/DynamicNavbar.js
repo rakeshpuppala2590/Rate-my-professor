@@ -1,15 +1,20 @@
 "use client";
 
+import { useState } from 'react';
 import { useUser, SignInButton, UserButton } from "@clerk/nextjs";
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { usePathname } from 'next/navigation';
+import { Menu, X } from 'lucide-react';
 
 export default function DynamicNavbar() {
   const { isSignedIn, user } = useUser();
   const pathname = usePathname();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const isHomePage = pathname === '/';
+
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   return (
     <motion.nav 
@@ -29,12 +34,25 @@ export default function DynamicNavbar() {
         </Link>
         
         {isSignedIn ? (
-          <div className="flex items-center space-x-6">
-            <NavLink href="/professor">Home</NavLink>
-            <NavLink href="/search-professors">Professors</NavLink>
-            <NavLink href="/team">Team</NavLink>
-            <UserButton />
-          </div>
+          <>
+            <div className="hidden md:flex items-center space-x-6">
+              <NavLink href="/professor">Home</NavLink>
+              <NavLink href="/search-professors">Professors</NavLink>
+              <NavLink href="/team">Team</NavLink>
+              <UserButton />
+            </div>
+            <div className="md:hidden flex items-center space-x-4">
+              <UserButton />
+              <motion.button 
+                className="text-white bg-indigo-600 p-2 rounded-md"
+                onClick={toggleMenu}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </motion.button>
+            </div>
+          </>
         ) : (
           <SignInButton>
             <motion.button 
@@ -47,6 +65,24 @@ export default function DynamicNavbar() {
           </SignInButton>
         )}
       </div>
+
+      <AnimatePresence>
+        {isSignedIn && isMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.2 }}
+            className="md:hidden bg-white bg-opacity-10 backdrop-blur-md"
+          >
+            <div className="container mx-auto px-6 py-4 flex flex-col space-y-4">
+              <NavLink href="/professor" onClick={toggleMenu}>Home</NavLink>
+              <NavLink href="/search-professors" onClick={toggleMenu}>Professors</NavLink>
+              <NavLink href="/team" onClick={toggleMenu}>Team</NavLink>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.nav>
   );
 }
