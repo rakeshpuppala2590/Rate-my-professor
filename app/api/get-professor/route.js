@@ -112,7 +112,7 @@ async function queryPinecone(userQuery) {
   const index = pinecone.Index("professors-index");
   const queryResponse = await index.query({
     vector: await getEmbedding(userQuery),
-    topK: 100,
+    topK: 200,
     includeMetadata: true,
   });
 
