@@ -2,6 +2,7 @@ import { HfInference } from "@huggingface/inference";
 import { NextResponse } from "next/server";
 import { Pinecone } from "@pinecone-database/pinecone";
 import OpenAI from "openai";
+const sessionStore = new Map();
 
 const hf = new HfInference(process.env.HUGGINGFACE_API_KEY);
 const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
@@ -122,27 +123,48 @@ async function queryPinecone(userQuery) {
 
 export async function POST(req) {
   try {
-    const { userQuery } = await req.json();
+    const { sessionId, userQuery } = await req.json();
 
+    // Retrieve or initialize the session history
+    const chatHistory = sessionStore.get(sessionId) || [];
+
+    // Get the relevant context from Pinecone
     const relevantContext = await queryPinecone(userQuery);
 
+    // Construct the augmented messages array
     const primer = `You are a personal assistant. Answer any questions I have about the professor only based on the info I have provided.`;
 
-    const augmented_query = `${relevantContext.join(
-      "\n"
-    )}\n---------\nquestion:\n${userQuery}`;
+    const messages = [
+      { role: "system", content: primer },
+      ...chatHistory,
+      ...relevantContext.map((context) => ({
+        role: "system",
+        content: context,
+      })),
+      { role: "user", content: userQuery },
+    ];
 
+    // Make the API call to OpenAI with the structured messages
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: primer },
-        { role: "user", content: augmented_query },
-      ],
+      messages,
       temperature: 0.7,
-      max_tokens: 1000,
+      max_tokens: 400,
     });
 
-    return NextResponse.json(completion.choices[0].message.content);
+    // Update session history
+    const newMessage = {
+      role: "user",
+      content: userQuery,
+    };
+    const assistantMessage = {
+      role: "assistant",
+      content: completion.choices[0].message.content,
+    };
+    chatHistory.push(newMessage, assistantMessage);
+    sessionStore.set(sessionId, chatHistory);
+
+    return NextResponse.json(assistantMessage.content);
   } catch (error) {
     console.error("Error:", error);
     return NextResponse.json(
