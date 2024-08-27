@@ -139,7 +139,7 @@ export async function POST(req) {
         { role: "user", content: augmented_query },
       ],
       temperature: 0.7,
-      max_tokens: 400,
+      max_tokens: 1000,
     });
 
     return NextResponse.json(completion.choices[0].message.content);
