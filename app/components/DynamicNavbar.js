@@ -39,10 +39,10 @@ export default function DynamicNavbar() {
               <NavLink href="/professor">Home</NavLink>
               <NavLink href="/search-professors">Professors</NavLink>
               <NavLink href="/team">Team</NavLink>
-              <UserButton />
+              <UserButton afterSignOutUrl="/" />
             </div>
             <div className="md:hidden flex items-center space-x-4">
-              <UserButton />
+              <UserButton afterSignOutUrl="/" />
               <motion.button 
                 className="text-white bg-indigo-600 p-2 rounded-md"
                 onClick={toggleMenu}
@@ -87,16 +87,16 @@ export default function DynamicNavbar() {
   );
 }
 
-function NavLink({ href, children }) {
-    return (
-      <Link href={href} passHref>
-        {/* Change motion.a to motion.div and avoid nested <a> */}
-        <motion.div
-          className="text-white hover:text-indigo-300 transition duration-300 cursor-pointer"
-          whileHover={{ scale: 1.1 }}
-        >
-          {children}
-        </motion.div>
-      </Link>
-    );
-  }
+function NavLink({ href, children, onClick }) {
+  return (
+    <Link href={href} passHref>
+      <motion.div
+        className="text-white hover:text-indigo-300 transition duration-300 cursor-pointer"
+        whileHover={{ scale: 1.1 }}
+        onClick={onClick}
+      >
+        {children}
+      </motion.div>
+    </Link>
+  );
+}
