@@ -1,36 +1,112 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Profscore: AI-Powered Professor Rating & Recommendation System
 
-## Getting Started
+Profscore is an innovative AI-driven platform designed to help students find and select the best professors based on ratings and popularity. Leveraging advanced search capabilities, Profscore provides personalized professor recommendations to enhance the academic experience.
 
-First, run the development server:
+## 🚀 Live Demo & Video
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- [Live Demo](https://profscore-beta.vercel.app/) 🌐
+- [YouTube Demo Video](https://youtu.be/oqETFLOss9I) 🎥
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 📜 Table of Contents
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+- [Features](#features)
+- [Technologies Used](#technologies-used)
+- [Getting Started](#getting-started)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Future Enhancements](#future-enhancements)
+- [Contributing](#contributing)
+- [License](#license)
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+## ✨ Features
 
-## Learn More
+- **Search Interface**: A simple, user-friendly interface for searching professors by name, department, or other criteria.
+- **Sorting Options**: Easily sort professors by rating or popularity to make informed decisions.
+- **AI-Powered Recommendations**: Uses AI and vector search capabilities to provide personalized professor recommendations.
+- **Data Collection & Processing**: Utilizes web scraping and machine learning for data collection and processing.
 
-To learn more about Next.js, take a look at the following resources:
+## 🛠️ Technologies Used
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Frontend**: React, Next.js, Tailwind CSS
+- **Backend**: Node.js, Pinecone vector database
+- **Data Collection**: Puppeteer, Cheerio
+- **AI & Data Processing**: Hugging Face, OpenAI
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+## 🏁 Getting Started
 
-## Deploy on Vercel
+To get a local copy up and running, follow these simple steps.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Prerequisites
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+Ensure you have the following installed:
+
+- Node.js
+- npm (Node Package Manager)
+
+### Installation
+
+1. Clone the repository:
+
+    ```bash
+    git clone https://github.com/pc9350/Rate-my-professor.git
+    cd Rate-my-professor
+    ```
+
+2. Install NPM packages:
+
+    ```bash
+    npm install
+    ```
+
+3. Set up environment variables:
+
+   Create a `.env` file in the root directory and add the following environment variables:
+
+    ```bash
+    PINECONE_API_KEY=your_pinecone_api_key
+    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+    NEXT_PUBLIC_OPENAI_API_KEY=your_openai_api_key
+    PINECONE_INDEX_NAME=your_index_name
+    HUGGINGFACE_API_KEY=your_huggingface_api_key
+    
+    ```
+
+4. Run the development server:
+
+    ```bash
+    npm run dev
+    ```
+
+   The app will be available at `http://localhost:3000`.
+
+## 🎯 Usage
+
+- Visit the [Live Demo](#) to explore the features.
+- Use the search interface to find professors by name or department.
+- Sort the results by rating or popularity to see top professors.
+- Check out personalized professor recommendations based on AI analysis.
+
+## 🔮 Future Enhancements
+
+- **Sentiment Analysis**: Integrate sentiment analysis to categorize reviews into positive, negative, or neutral sentiments, providing more nuanced insights.
+- **Multi-Language Support**: Implement multi-language support to make Profscore accessible to users worldwide, breaking language barriers.
+
+## 🤝 Contributing
+
+Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+## 📧 Contact
+
+Your Name - [chhabrapranav2001@gmail.com](mailto:chhabrapranav2001@gmail.com)
+
+Project Link: [https://github.com/pc9350/Rate-my-professor](https://github.com/pc9350/Rate-my-professor)
